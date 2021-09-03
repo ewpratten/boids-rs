@@ -4,5 +4,9 @@
     ],
     "rust-analyzer.checkOnSave.features": [
         "rayon"
+    ],
+    "cSpell.words": [
+        "Boid",
+        "boids"
     ]
 }

@@ -1,89 +1,13 @@
 use cgmath::{num_traits::Float, BaseNum, InnerSpace, MetricSpace, Vector2, Vector3};
 use rand::{distributions::Standard, prelude::Distribution, Rng};
-use serde::{Deserialize, Serialize};
 use std::ops::{AddAssign, Div, DivAssign, Mul, MulAssign, Sub};
 
+use super::{convert::LossyConvert, limits::limit_magnitude_v2, Boid, BoidWeights};
 use crate::flock::Flock;
 
-/// Limit the magnitude of a vector
-fn limit_magnitude_v2<U: BaseNum + Float>(vector: Vector2<U>, max_magnitude: U) -> Vector2<U> {
-    let mag_sq = vector.magnitude2();
-    if mag_sq > max_magnitude.powi(2) {
-        vector.mul(max_magnitude / mag_sq.sqrt())
-    } else {
-        vector
-    }
-}
-/// Limit the magnitude of a vector
-fn limit_magnitude_v3<U: BaseNum + Float>(vector: Vector3<U>, max_magnitude: U) -> Vector3<U> {
-    let mag_sq = vector.magnitude2();
-    if mag_sq > max_magnitude.powi(2) {
-        vector.mul(max_magnitude / mag_sq.sqrt())
-    } else {
-        vector
-    }
-}
-
-/// Defines the force weights for a boid
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, PartialOrd)]
-pub struct BoidWeights<U: BaseNum> {
-    pub alignment: U,
-    pub cohesion: U,
-    pub separation: U,
-}
-
-impl<U: BaseNum + Float> Default for BoidWeights<U> {
-    fn default() -> Self {
-        Self {
-            alignment: U::from(1.5).unwrap(),
-            cohesion: U::from(1.0).unwrap(),
-            separation: U::from(1.0).unwrap(),
-        }
-    }
-}
-
-/// Common code across all boids no matter their dimensions
-pub trait Boid<T: Boid<T, U>, U: BaseNum + Float> {
-    /// Get the current position of the boid
-    fn position<'a>(&'a self) -> &'a Vector2<U>;
-
-    /// Get the current velocity of the boid
-    fn velocity<'a>(&'a self) -> &'a Vector2<U>;
-
-    /// Get the current acceleration of the boid
-    fn acceleration<'a>(&'a self) -> &'a Vector2<U>;
-
-    /// Calculate the separation force for this boid
-    fn separate(&self, flock: &Flock<T, U>) -> Vector2<U>;
-
-    /// Calculate the alignment force for this boid
-    fn align(&self, flock: &Flock<T, U>) -> Vector2<U>;
-
-    /// Calculate the cohesion force for this boid
-    fn cohesion(&self, flock: &Flock<T, U>) -> Vector2<U>;
-
-    /// Set the weights for the boid
-    fn set_weights(&mut self, weights: BoidWeights<U>);
-
-    /// Get the weights for the boid
-    fn get_weights<'a>(&'a self) -> &'a BoidWeights<U>;
-
-    /// Add another force to the boid and calculate all other internal vectors
-    fn add_force(&mut self, force: Vector2<U>);
-
-    /// Update the boid based on its flock
-    fn update(&mut self, flock: &Flock<T, U>) {
-        let weights = self.get_weights();
-        let separation = self.separate(flock).mul(weights.separation);
-        let alignment = self.align(flock).mul(weights.alignment);
-        let cohesion = self.cohesion(flock).mul(weights.cohesion);
-        let force = separation + alignment + cohesion;
-        self.add_force(force);
-    }
-}
-
 /// A Boid in 2 dimensions.
-#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Boid2D<U: BaseNum + Float> {
     /// Boid position
     pub position: Vector2<U>,
@@ -125,8 +49,8 @@ impl<U: BaseNum + Float> Boid2D<U> {
     }
 }
 
-impl<T: Boid<T, U>, U: BaseNum + Float> Boid<T, U> for Boid2D<U> {
-    fn separate(&self, flock: &Flock<T, U>) -> Vector2<U> {
+impl<U: BaseNum + Float> Boid<Boid2D<U>, U> for Boid2D<U> {
+    fn separate(&self, flock: &Flock<Boid2D<U>, U>) -> Vector3<U> {
         // Alloc a steering force
         let mut steer = Vector2::new(U::zero(), U::zero());
 
@@ -135,12 +59,13 @@ impl<T: Boid<T, U>, U: BaseNum + Float> Boid<T, U> for Boid2D<U> {
 
         // Steer away from nearby boids
         for boid in flock.boids.iter() {
-            let distance = self.position.distance(*boid.position());
+            let boid_pos = boid.position().lossy_convert();
+            let distance = self.position.distance(boid_pos);
 
             // Only operate on nearby boids
             if distance > U::zero() && distance < flock.goal_separation {
                 // Calculate vector pointing away from neighbor
-                let diff = (self.position - *boid.position()).normalize().div(distance);
+                let diff = (self.position - boid_pos).normalize().div(distance);
                 steer.add_assign(diff);
                 count += U::one();
             }
@@ -159,10 +84,10 @@ impl<T: Boid<T, U>, U: BaseNum + Float> Boid<T, U> for Boid2D<U> {
             );
         }
 
-        steer
+        steer.lossy_convert()
     }
 
-    fn align(&self, flock: &Flock<T, U>) -> Vector2<U> {
+    fn align(&self, flock: &Flock<Boid2D<U>, U>) -> Vector3<U> {
         // Alloc an alignment force
         let mut align = Vector2::new(U::zero(), U::zero());
 
@@ -171,11 +96,11 @@ impl<T: Boid<T, U>, U: BaseNum + Float> Boid<T, U> for Boid2D<U> {
 
         // Align with nearby boids
         for boid in flock.boids.iter() {
-            let distance = self.position.distance(*boid.position());
+            let distance = self.position.distance(boid.position().lossy_convert());
 
             // Only operate on nearby boids
             if distance > U::zero() && distance < flock.goal_alignment {
-                align.add_assign(*boid.velocity());
+                align.add_assign(boid.velocity().lossy_convert());
                 count += U::one();
             }
         }
@@ -189,12 +114,13 @@ impl<T: Boid<T, U>, U: BaseNum + Float> Boid<T, U> for Boid2D<U> {
                 align.normalize().mul(self.max_speed).sub(self.velocity),
                 self.max_force,
             )
+            .lossy_convert()
         } else {
-            Vector2::new(U::zero(), U::zero())
+            Vector3::new(U::zero(), U::zero(), U::zero())
         }
     }
 
-    fn cohesion(&self, flock: &Flock<T, U>) -> Vector2<U> {
+    fn cohesion(&self, flock: &Flock<Boid2D<U>, U>) -> Vector3<U> {
         // Alloc a steering force
         let mut cohesion = Vector2::new(U::zero(), U::zero());
 
@@ -203,11 +129,12 @@ impl<T: Boid<T, U>, U: BaseNum + Float> Boid<T, U> for Boid2D<U> {
 
         // Steer towards nearby boids
         for boid in flock.boids.iter() {
-            let distance = self.position.distance(*boid.position());
+            let boid_pos = boid.position().lossy_convert();
+            let distance = self.position.distance(boid_pos);
 
             // Only operate on nearby boids
             if distance > U::zero() && distance < flock.goal_cohesion {
-                cohesion.add_assign(*boid.position());
+                cohesion.add_assign(boid_pos);
                 count += U::one();
             }
         }
@@ -222,8 +149,9 @@ impl<T: Boid<T, U>, U: BaseNum + Float> Boid<T, U> for Boid2D<U> {
                 cohesion.normalize().mul(self.max_speed).sub(self.velocity),
                 self.max_force,
             )
+            .lossy_convert()
         } else {
-            Vector2::new(U::zero(), U::zero())
+            Vector3::new(U::zero(), U::zero(), U::zero())
         }
     }
 
@@ -235,29 +163,42 @@ impl<T: Boid<T, U>, U: BaseNum + Float> Boid<T, U> for Boid2D<U> {
         &self.weights
     }
 
-    fn add_force(&mut self, force: Vector2<U>) {
+    fn with_force(&self, force: Vector3<U>) -> Boid2D<U> {
+        // Alloc a new boid
+        let mut boid = self.clone();
+
         // Apply acceleration to velocity
-        self.velocity.add_assign(force);
+        boid.velocity.add_assign(force.lossy_convert());
 
         // Limit the speed
-        self.velocity = limit_magnitude_v2(self.velocity, self.max_speed);
+        boid.velocity = limit_magnitude_v2(self.velocity, self.max_speed);
 
         // Apply velocity to position
-        self.position.add_assign(self.velocity);
+        boid.position.add_assign(self.velocity);
 
         // Reset acceleration
-        self.acceleration.mul_assign(U::zero());
+        boid.acceleration.mul_assign(U::zero());
+        boid
     }
 
-    fn position<'a>(&'a self) -> &'a Vector2<U> {
-        &self.position
+    fn position(&self) -> Vector3<U> {
+        self.position.lossy_convert()
     }
 
-    fn velocity<'a>(&'a self) -> &'a Vector2<U> {
-        &self.velocity
+    fn velocity(&self) -> Vector3<U> {
+        self.velocity.lossy_convert()
     }
 
-    fn acceleration<'a>(&'a self) -> &'a Vector2<U> {
-        &self.acceleration
+    fn acceleration(&self) -> Vector3<U> {
+        self.acceleration.lossy_convert()
+    }
+
+    fn update(&self, flock: &Flock<Boid2D<U>, U>) -> Boid2D<U> {
+        let weights = self.get_weights();
+        let separation = self.separate(flock).mul(weights.separation);
+        let alignment = self.align(flock).mul(weights.alignment);
+        let cohesion = self.cohesion(flock).mul(weights.cohesion);
+        let force = separation + alignment + cohesion;
+        self.with_force(force)
     }
 }
