@@ -51,6 +51,9 @@ impl<U: BaseNum + Float> Boid3D<U> {
 
 impl<U: BaseNum + Float> Boid<Boid3D<U>, U> for Boid3D<U> {
     fn separate(&self, flock: &Flock<Boid3D<U>, U>) -> Vector3<U> {
+        #[cfg(feature = "puffin")]
+        puffin::profile_function!();
+
         // Alloc a steering force
         let mut steer = Vector3::new(U::zero(), U::zero(), U::zero());
 
@@ -87,6 +90,9 @@ impl<U: BaseNum + Float> Boid<Boid3D<U>, U> for Boid3D<U> {
     }
 
     fn align(&self, flock: &Flock<Boid3D<U>, U>) -> Vector3<U> {
+        #[cfg(feature = "puffin")]
+        puffin::profile_function!();
+
         // Alloc an alignment force
         let mut align = Vector3::new(U::zero(), U::zero(), U::zero());
 
@@ -119,6 +125,9 @@ impl<U: BaseNum + Float> Boid<Boid3D<U>, U> for Boid3D<U> {
     }
 
     fn cohesion(&self, flock: &Flock<Boid3D<U>, U>) -> Vector3<U> {
+        #[cfg(feature = "puffin")]
+        puffin::profile_function!();
+
         // Alloc a steering force
         let mut cohesion = Vector3::new(U::zero(), U::zero(), U::zero());
 
@@ -190,6 +199,9 @@ impl<U: BaseNum + Float> Boid<Boid3D<U>, U> for Boid3D<U> {
     }
 
     fn update(&self, flock: &Flock<Boid3D<U>, U>) -> Boid3D<U> {
+        #[cfg(feature = "puffin")]
+        puffin::profile_function!();
+
         let weights = self.get_weights();
         let separation = self.separate(flock).mul(weights.separation);
         let alignment = self.align(flock).mul(weights.alignment);

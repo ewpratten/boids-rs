@@ -19,8 +19,6 @@ pub struct Boid2D<U: BaseNum + Float> {
     pub max_speed: U,
     /// Boid maximum force
     pub max_force: U,
-    /// Boid maximum turn rate
-    pub r: U,
     /// Boid weights
     pub weights: BoidWeights<U>,
 }
@@ -32,7 +30,6 @@ impl<U: BaseNum + Float> Boid2D<U> {
             position,
             velocity: Vector2::new(angle.cos(), angle.sin()),
             acceleration: Vector2::new(U::zero(), U::zero()),
-            r: U::one() + U::one(),
             max_speed: U::one() + U::one(),
             max_force: U::from(0.03).unwrap(),
             weights: BoidWeights::default(),
@@ -51,6 +48,9 @@ impl<U: BaseNum + Float> Boid2D<U> {
 
 impl<U: BaseNum + Float> Boid<Boid2D<U>, U> for Boid2D<U> {
     fn separate(&self, flock: &Flock<Boid2D<U>, U>) -> Vector3<U> {
+        #[cfg(feature = "puffin")]
+        puffin::profile_function!();
+
         // Alloc a steering force
         let mut steer = Vector2::new(U::zero(), U::zero());
 
@@ -88,6 +88,9 @@ impl<U: BaseNum + Float> Boid<Boid2D<U>, U> for Boid2D<U> {
     }
 
     fn align(&self, flock: &Flock<Boid2D<U>, U>) -> Vector3<U> {
+        #[cfg(feature = "puffin")]
+        puffin::profile_function!();
+
         // Alloc an alignment force
         let mut align = Vector2::new(U::zero(), U::zero());
 
@@ -121,6 +124,9 @@ impl<U: BaseNum + Float> Boid<Boid2D<U>, U> for Boid2D<U> {
     }
 
     fn cohesion(&self, flock: &Flock<Boid2D<U>, U>) -> Vector3<U> {
+        #[cfg(feature = "puffin")]
+        puffin::profile_function!();
+
         // Alloc a steering force
         let mut cohesion = Vector2::new(U::zero(), U::zero());
 
@@ -194,11 +200,17 @@ impl<U: BaseNum + Float> Boid<Boid2D<U>, U> for Boid2D<U> {
     }
 
     fn update(&self, flock: &Flock<Boid2D<U>, U>) -> Boid2D<U> {
+        #[cfg(feature = "puffin")]
+        puffin::profile_function!();
+        
         let weights = self.get_weights();
         let separation = self.separate(flock).mul(weights.separation);
         let alignment = self.align(flock).mul(weights.alignment);
         let cohesion = self.cohesion(flock).mul(weights.cohesion);
-        let force = separation + alignment + cohesion;
-        self.with_force(force)
+        let o = self.with_force(separation)
+            .with_force(alignment)
+            .with_force(cohesion);
+            // println!("{:?}\t{:?}", o.position, o.velocity);
+            o
     }
 }

@@ -19,3 +19,9 @@ cgmath = { version = "0.18", features = ["serde"] }
 rand = "0.8"
 serde = { version = "1.0", optional = true, features = ["derive"] }
 cfg-if = "1"
+puffin = { version = "0.7", optional = true }
+
+[dev-dependencies]
+raylib = "3.5"
+puffin = "0.7"
+puffin_http = "0.4"
