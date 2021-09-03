@@ -30,7 +30,7 @@ impl<U: BaseNum + Float> Boid2D<U> {
             position,
             velocity: Vector2::new(angle.cos(), angle.sin()),
             acceleration: Vector2::new(U::zero(), U::zero()),
-            max_speed: U::one() + U::one(),
+            max_speed: U::from(2.0).unwrap(),
             max_force: U::from(0.03).unwrap(),
             weights: BoidWeights::default(),
         }
@@ -177,10 +177,10 @@ impl<U: BaseNum + Float> Boid<Boid2D<U>, U> for Boid2D<U> {
         boid.velocity.add_assign(force.lossy_convert());
 
         // Limit the speed
-        boid.velocity = limit_magnitude_v2(self.velocity, self.max_speed);
+        boid.velocity = limit_magnitude_v2(boid.velocity, self.max_speed);
 
         // Apply velocity to position
-        boid.position.add_assign(self.velocity);
+        boid.position.add_assign(boid.velocity);
 
         // Reset acceleration
         boid.acceleration.mul_assign(U::zero());
@@ -202,15 +202,13 @@ impl<U: BaseNum + Float> Boid<Boid2D<U>, U> for Boid2D<U> {
     fn update(&self, flock: &Flock<Boid2D<U>, U>) -> Boid2D<U> {
         #[cfg(feature = "puffin")]
         puffin::profile_function!();
-        
+
         let weights = self.get_weights();
         let separation = self.separate(flock).mul(weights.separation);
         let alignment = self.align(flock).mul(weights.alignment);
         let cohesion = self.cohesion(flock).mul(weights.cohesion);
-        let o = self.with_force(separation)
+        self.with_force(separation)
             .with_force(alignment)
-            .with_force(cohesion);
-            // println!("{:?}\t{:?}", o.position, o.velocity);
-            o
+            .with_force(cohesion)
     }
 }

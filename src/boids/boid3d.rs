@@ -176,10 +176,10 @@ impl<U: BaseNum + Float> Boid<Boid3D<U>, U> for Boid3D<U> {
         boid.velocity.add_assign(force);
 
         // Limit the speed
-        boid.velocity = limit_magnitude_v3(self.velocity, self.max_speed);
+        boid.velocity = limit_magnitude_v3(boid.velocity, self.max_speed);
 
         // Apply velocity to position
-        boid.position.add_assign(self.velocity);
+        boid.position.add_assign(boid.velocity);
 
         // Reset acceleration
         boid.acceleration.mul_assign(U::zero());

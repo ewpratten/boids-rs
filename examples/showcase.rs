@@ -6,13 +6,12 @@ fn main() {
     let (mut rl, thread) = raylib::init()
         .size(800, 600)
         .title("Boids showcase")
-        .msaa_4x()
         .vsync()
         .build();
 
     // Create a flock of boids
     let mut flock = Flock {
-        boids: (0..10000)
+        boids: (0..500)
             .map(|_| Boid2D::new(Vector2::new(400.0, 300.0)))
             .collect(),
         ..Default::default()
@@ -36,7 +35,7 @@ fn main() {
             d.draw_circle(
                 boid.position.x as i32,
                 boid.position.y as i32,
-                5.0,
+                3.0,
                 Color::BLACK,
             );
         }
