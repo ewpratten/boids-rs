@@ -23,3 +23,13 @@ When compiled with the `rayon` feature enabled, the library will use the `rayon`
 - `serde`: Enable serde support for all types
 - `puffin`: Enable support for the [`puffin`](https://github.com/EmbarkStudios/puffin) profiler
   - Note: `puffin_viewer` requires the packages `libgtk-3-dev libatk1.0-dev libsdl-pango-dev libcairo2-dev`
+
+## Demo
+
+You can run the demo app with
+
+```sh
+cargo run --example showcase --features rayon
+```
+
+![](screenrec001.gif)
