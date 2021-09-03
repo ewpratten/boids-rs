@@ -5,8 +5,7 @@
 [![Clippy](https://github.com/Ewpratten/boids/actions/workflows/clippy.yml/badge.svg)](https://github.com/Ewpratten/boids/actions/workflows/clippy.yml)
 [![Audit](https://github.com/Ewpratten/boids/actions/workflows/audit.yml/badge.svg)](https://github.com/Ewpratten/boids/actions/workflows/audit.yml)
 
-
-repo description
+The `boids` crate is a reasonably fast implementation of the [Boids](https://en.wikipedia.org/wiki/Boids) algorithm. If you have speed improvements, please submit a pull request!
 
 ## Parallel processing & speed
 
@@ -18,14 +17,9 @@ When compiled with the `rayon` feature enabled, the library will use the `rayon`
 | 1000       | 414ms              | 42.5ms        |
 | 10000      | ???                | 3.4s          |
 
-## Installation
+## Features
 
-This crate can be installed via `cargo` with:
-
-```sh
-cargo install boids
-```
-
-```
-libgtk-3-dev libatk1.0-dev libsdl-pango-dev libcairo2-dev
-``` 
+- `rayon`: Enable parallel processing
+- `serde`: Enable serde support for all types
+- `puffin`: Enable support for the [`puffin`](https://github.com/EmbarkStudios/puffin) profiler
+  - Note: `puffin_viewer` requires the packages `libgtk-3-dev libatk1.0-dev libsdl-pango-dev libcairo2-dev`
