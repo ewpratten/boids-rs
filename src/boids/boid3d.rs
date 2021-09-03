@@ -206,7 +206,14 @@ impl<U: BaseNum + Float> Boid<Boid3D<U>, U> for Boid3D<U> {
         let separation = self.separate(flock).mul(weights.separation);
         let alignment = self.align(flock).mul(weights.alignment);
         let cohesion = self.cohesion(flock).mul(weights.cohesion);
-        let force = separation + alignment + cohesion;
-        self.with_force(force)
+        let targeting = flock
+            .target
+            .map(|target| target.sub(self.position))
+            .unwrap_or(Vector3::new(U::zero(), U::zero(), U::zero()))
+            .mul(weights.targeting);
+        self.with_force(separation)
+            .with_force(alignment)
+            .with_force(cohesion)
+            .with_force(targeting)
     }
 }

@@ -207,8 +207,14 @@ impl<U: BaseNum + Float> Boid<Boid2D<U>, U> for Boid2D<U> {
         let separation = self.separate(flock).mul(weights.separation);
         let alignment = self.align(flock).mul(weights.alignment);
         let cohesion = self.cohesion(flock).mul(weights.cohesion);
+        let targeting = flock
+            .target
+            .map(|target| target.sub(self.position.lossy_convert()))
+            .unwrap_or(Vector3::new(U::zero(), U::zero(), U::zero()))
+            .mul(weights.targeting);
         self.with_force(separation)
             .with_force(alignment)
             .with_force(cohesion)
+            .with_force(targeting)
     }
 }

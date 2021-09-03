@@ -1,5 +1,5 @@
 use boids::{Boid2D, Flock};
-use cgmath::Vector2;
+use cgmath::{Vector2, Vector3};
 use raylib::prelude::*;
 
 fn main() {
@@ -38,6 +38,14 @@ fn main() {
                 3.0,
                 Color::BLACK,
             );
+        }
+
+
+        // Handle mouse targeting
+        if d.is_mouse_button_down(MouseButton::MOUSE_LEFT_BUTTON) {
+            flock.set_target(Some(Vector3::new(d.get_mouse_x() as f32, d.get_mouse_y() as f32, 0.0)));
+        }else {
+            flock.set_target(None);
         }
 
         // Update the flock

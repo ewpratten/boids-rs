@@ -1,4 +1,4 @@
-use cgmath::{num_traits::Float, BaseNum};
+use cgmath::{num_traits::Float, BaseNum, Vector3};
 #[cfg(feature = "rayon")]
 use rayon::prelude::*;
 
@@ -11,6 +11,7 @@ pub struct Flock<T: Boid<T, U>, U: BaseNum + Float> {
     pub goal_separation: U,
     pub goal_alignment: U,
     pub goal_cohesion: U,
+    pub target: Option<Vector3<U>>,
 }
 
 impl<T: Boid<T, U> + Clone, U: BaseNum + Float> Flock<T, U>
@@ -39,6 +40,11 @@ where
             }
         }
     }
+
+    /// Set a target for the flock to follow
+    pub fn set_target(&mut self, target: Option<Vector3<U>>) {
+        self.target = target;
+    }
 }
 
 impl<T: Boid<T, U>, U: BaseNum + Float> Default for Flock<T, U> {
@@ -48,6 +54,7 @@ impl<T: Boid<T, U>, U: BaseNum + Float> Default for Flock<T, U> {
             goal_separation: U::from(25.0).unwrap(),
             goal_alignment: U::from(50.0).unwrap(),
             goal_cohesion: U::from(50.0).unwrap(),
+            target: None
         }
     }
 }

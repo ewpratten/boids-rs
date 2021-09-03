@@ -14,6 +14,7 @@ pub struct BoidWeights<U: BaseNum> {
     pub alignment: U,
     pub cohesion: U,
     pub separation: U,
+    pub targeting: U,
 }
 
 impl<U: BaseNum + Float> Default for BoidWeights<U> {
@@ -22,6 +23,7 @@ impl<U: BaseNum + Float> Default for BoidWeights<U> {
             alignment: U::from(1.5).unwrap(),
             cohesion: U::from(1.0).unwrap(),
             separation: U::from(1.0).unwrap(),
+            targeting: U::from(0.0003).unwrap(),
         }
     }
 }
