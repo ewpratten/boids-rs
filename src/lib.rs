@@ -1,7 +1,5 @@
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-    }
-}
+pub mod boid;
+pub use boid::{Boid2D};
+pub mod flock;
+pub use flock::Flock;
+mod iter;

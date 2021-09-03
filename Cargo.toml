@@ -1,17 +1,21 @@
 [package]
-name = "<crate_name>"
+name = "boids"
 version = "0.1.0"
 authors = ["Evan Pratten <ewpratten@gmail.com>"]
 edition = "2018"
-description = "<description>"
-documentation = "https://docs.rs/<crate_name>"
+description = "A fast boids library for Rust"
+documentation = "https://docs.rs/boids"
 readme = "README.md"
-homepage = "https://github.com/ewpratten/<repo_name>"
-repository = "https://github.com/ewpratten/<repo_name>"
+homepage = "https://github.com/ewpratten/boids"
+repository = "https://github.com/ewpratten/boids"
 license = "GPL-3.0"
 keywords = []
 categories = []
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
+rayon = { version = "1.5", optional = true }
+cgmath = { version = "0.18", features = ["serde"] }
+rand = "0.8"
+serde = { version = "1.0", features = ["derive"] }
+cfg-if = "1"

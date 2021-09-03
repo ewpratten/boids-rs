@@ -1,0 +1,8 @@
+{
+    "rust-analyzer.cargo.features": [
+        "rayon"
+    ],
+    "rust-analyzer.checkOnSave.features": [
+        "rayon"
+    ]
+}
